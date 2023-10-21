@@ -1,6 +1,7 @@
 use std::env;
 use std::process;
 use std::fs;
+use std::collections::HashMap;
 
 fn main() {
 
@@ -16,77 +17,45 @@ fn main() {
         process::exit(1);
     });
 
-    let mut total_score: u32 = 0;
-    const LOSS_OUTCOME: u32 = 1;
-    const TIE_OUTCOME: u32 = 2;
+    let mut priority_sum: u32 = 0;
 
     for line in input_file_contents.lines() {
-        let line_symbols = line.split(" ");
-        let symbols_vec: Vec<&str> = line_symbols.collect();
-        let opponent_play: u32 = played_type_value(symbols_vec[0]);
-        let mut my_play: u32 = opponent_play;
-        let target_outcome: u32 = played_type_value(symbols_vec[1]);
 
-        let mut round_outcome: RoundOutcome = RoundOutcome::Loss;
+        let line_middle: usize = (line.len() / 2);
+        let (first_compartment, second_compartment) = line.split_at(line_middle);
+        let mut first_compartment_contents: HashMap<char, u32> = HashMap::new();
         
-        if target_outcome == TIE_OUTCOME {
-            round_outcome = RoundOutcome::Tie;
-        } else if target_outcome == LOSS_OUTCOME {
-            round_outcome = RoundOutcome::Loss;
-            my_play = get_lose_move_value(&opponent_play);
-        } else {
-            round_outcome = RoundOutcome::Win;
-            my_play = get_win_move_value(&opponent_play);
+        for c in first_compartment.chars() {
+            first_compartment_contents.insert(c, calculate_priority(&c));
         }
 
-        total_score += round_outcome_value(&round_outcome) + my_play;
+        for c in second_compartment.chars() {
+            if first_compartment_contents.contains_key(&c) {
+                priority_sum += calculate_priority(&c);
+                break;
+            }
+        }
     }
 
-    println!("Total score: {}", total_score);
+    println!("Priority sum: {}", priority_sum);
 }
 
-enum RoundOutcome {
-    Win,
-    Tie,
-    Loss,
-}
+fn calculate_priority(character: &char) -> u32 {
 
-fn round_outcome_value(symbol: &RoundOutcome) -> u32 {
-    match symbol {
-        RoundOutcome::Win => 6,
-        RoundOutcome::Tie => 3,
-        RoundOutcome::Loss => 0,
+    let c: char = character.clone();
+    let char_ascii_val: u32 = c as u32;
+    let mut char_priority: u32 = 0;
+
+    // Get priority of character by ascii code and relevant offset
+    // a - z priority 1 - 26
+    // A - Z priority 27 - 52
+    if char_ascii_val < 97 {
+        char_priority = char_ascii_val - 38;
+    } else {
+        char_priority = char_ascii_val - 96;
     }
-}
 
-fn played_type_value(played_type: &str) -> u32 {
-    match played_type {
-        "A" => 1,
-        "B" => 2,
-        "C" => 3,
-        "X" => 1,
-        "Y" => 2,
-        "Z" => 3,
-        &_ => 0,
-    }
-}
-
-fn get_win_move_value(opponent_move: &u32) -> u32 {
-    match opponent_move {
-        1 => 2,
-        2 => 3,
-        3 => 1,
-        &_ => 0,
-    }
-}
-
-fn get_lose_move_value(opponent_move: &u32) -> u32 {
-    match opponent_move {
-        1 => 3,
-        2 => 1,
-        3 => 2,
-        &_ => 0,
-    }
+    char_priority
 }
 
 struct Config {
