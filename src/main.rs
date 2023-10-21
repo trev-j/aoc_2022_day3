@@ -18,19 +18,36 @@ fn main() {
     });
 
     let mut priority_sum: u32 = 0;
+    let mut lines = input_file_contents.lines();
 
-    for line in input_file_contents.lines() {
+    while let Some(line) = lines.next() {
 
-        let line_middle: usize = (line.len() / 2);
-        let (first_compartment, second_compartment) = line.split_at(line_middle);
-        let mut first_compartment_contents: HashMap<char, u32> = HashMap::new();
+        let first_rucksack = line;
+        let second_rucksack = lines.next().unwrap();
+        let third_rucksack = lines.next().unwrap();
+
+        // Create map for contents of first and second rucksack
+        let mut first_rucksack_contents: HashMap<char, bool> = HashMap::new();
+        let mut second_rucksack_contents: HashMap<char, bool> = HashMap::new();
         
-        for c in first_compartment.chars() {
-            first_compartment_contents.insert(c, calculate_priority(&c));
+        // Map all unique characters in first rucsack
+        for c in first_rucksack.chars() {
+            if !first_rucksack_contents.contains_key(&c) {
+                first_rucksack_contents.insert(c, true);
+            }
         }
 
-        for c in second_compartment.chars() {
-            if first_compartment_contents.contains_key(&c) {
+        // For second map, only add characters that are also present in first rucksack
+        for c in second_rucksack.chars() {
+            if first_rucksack_contents.contains_key(&c) && !second_rucksack_contents.contains_key(&c) {
+                second_rucksack_contents.insert(c, true);
+            }
+        }
+        
+        // Knowing that there is only one character in all three, rucksacks, if key is found in second (derived) map
+        // then that is common to all 3 rucksacks. Calculate character priority, sum, and break loop.
+        for c in third_rucksack.chars() {
+            if second_rucksack_contents.contains_key(&c) {
                 priority_sum += calculate_priority(&c);
                 break;
             }
